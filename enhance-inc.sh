@@ -64,6 +64,26 @@ _debug_json_file () {
 }
 
 # =====================================
+# -- _list_core_functions
+# -- List all core functions
+# =====================================
+ebc_functions[_list_core_functions]="List all core functions"
+function _list_core_functions () {
+    _running "Listing all core functions with descriptions"
+    # Print header
+    printf "%-40s | %-60s | %s\n" "Function" "Description" "Count"
+    printf "%s-+-%s-+-%s\n" "$(printf '%0.s-' {1..40})" "$(printf '%0.s-' {1..60})" "$(printf '%0.s-' {1..10})"
+    
+    # Loop through array, printing key and value
+    for FUNC_NAME in "${!ebc_functions[@]}"; do
+        # -- Count how many times the function is used in the script
+        FUNC_COUNT=$(grep "$FUNC_NAME" $SCRIPT_DIR/*.sh | wc -l)
+        DESCRIPTION="${ebc_functions[$FUNC_NAME]}"
+        printf "%-40s | %-60s | %s\n" "$FUNC_NAME" "$DESCRIPTION" "$FUNC_COUNT"
+    done
+}
+
+# =====================================
 # -- _pre_flight_check
 # -- Check to make sure apps and api credentials are available
 # =====================================
@@ -71,7 +91,7 @@ ebc_functions[_pre_flight_check]="Check to make sure apps and api credentials ar
 function _pre_flight_check () {
     # -- Check enhance creds
     _debug "Checking for enhance credentials"
-    _check_creds
+    _check_api_creds
 
     # -- Check required
     _debug "Checking for required apps"
@@ -106,6 +126,11 @@ function _check_api_creds () {
             _error "API_TOKEN not found in $API_CRED_FILE."
             exit 1
         fi
+    fi
+
+    if [[ -z $API_URL ]]; then
+        _error "API_URL not found in $API_CRED_FILE."
+        exit 1
     fi
 }
 
@@ -143,4 +168,53 @@ function _check_debug () {
 	elif [[ $DEBUG_CURL_OUTPUT == "2" ]]; then
 		echo -e "${CYAN}** DEBUG: Debugging is on + CURL OUTPUT${ECOL}"	
 	fi
+}
+
+# =====================================
+# -- _json_from_kv
+# -- Create JSON from key=value pairs
+# =====================================
+ebc_functions[_json_from_kv]="Create JSON from key=value pairs"
+function _json_from_kv() {
+    local json=""
+    local first=1
+    local key
+    local value
+
+    for pair in "$@"; do
+        # Split the pair into key and value
+        key="${pair%%=*}"
+        value="${pair#*=}"
+
+        # Add comma if not the first pair
+        if [[ $first -eq 1 ]]; then
+            first=0
+        else
+            json="$json,"
+        fi
+
+        # Check if value is numeric or boolean
+        if [[ $value =~ ^[0-9]+$ ]] || [[ $value == "true" ]] || [[ $value == "false" ]] || [[ $value == "null" ]]; then
+            # Numeric or boolean values don't need quotes
+            json="$json\"$key\":$value"
+        else
+            # String values need quotes
+            json="$json\"$key\":\"$value\""
+        fi
+    done
+
+    json="{$json}"
+    echo "$json"
+}
+
+# =====================================
+# -- _generate_password
+# -- Generate a random password
+# =====================================
+ebc_functions[_generate_password]="Generate a random password"
+function _generate_password() {
+    local length="${1:-16}"
+    local password
+    password=$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c "$length")
+    echo "$password"
 }
