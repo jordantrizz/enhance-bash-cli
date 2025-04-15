@@ -478,10 +478,10 @@ function _enhance_apps () {
 }
 
 # ====================================-
-# -- _enhance_website_apps_create $ORG_ID $WEBSITE_ID $APP $APP_VERSION
+# -- _enhance_app_create $ORG_ID $WEBSITE_ID $APP $APP_VERSION
 # -- Create an app /orgs/{orgId}/websites/{websiteId}/apps
 # =====================================
-function _enhance_website_apps_create () {    
+function _enhance_app_create () {    
     # "app": "wordpress",
     # "version": "string",
     # "path": "string",

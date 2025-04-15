@@ -164,7 +164,7 @@ function _check_bash () {
 # ===============================================
 function _check_debug () {
 	if [[ $DEBUG == "1" ]]; then
-		echo -e "${CYAN}** DEBUG: Debugging is on${ECOL}"
+		echo -e "${CYAN}** DEBUG: Debugging is on${ECOL}" >&2
 	elif [[ $DEBUG_CURL_OUTPUT == "2" ]]; then
 		echo -e "${CYAN}** DEBUG: Debugging is on + CURL OUTPUT${ECOL}"	
 	fi
