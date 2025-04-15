@@ -404,9 +404,11 @@ function _enhance_org_website_create () {
     if [[ $CURL_EXIT_CODE == "201" ]]; then
         _success "$(_parse_api_output $API_OUTPUT)"
         _quiet "$(echo $API_OUTPUT | jq -r '.id')"
+        return 0
     else
         _error "Error: $CURL_EXIT_CODE"
         _error "$(_parse_api_error $API_OUTPUT)"
+        return 1
     fi
 }
 
