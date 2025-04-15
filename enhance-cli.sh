@@ -25,6 +25,7 @@ ebc_commands_type[plan]="Plan Actions"
 ebc_commands_type[website]="Website Actions"
 ebc_commands_type[subscriptions]="Subscription Actions"
 ebc_commands_type[servers]="Server Actions"
+ebc_commands_type[apps]="Apps Actions"
 
 typeset -gA ebc_commands_general
 ebc_commands_general[status]="Get status of the Enhance API"
@@ -49,8 +50,8 @@ typeset -gA ebc_commands_servers
 ebc_commands_servers[servers]="Get server information"
 
 typeset -gA ebc_commands_apps
-ebc_commands_apps[apps]="Get installable apps"
-ebc_commands_apps[website-apps-create]="Create a website app"
+ebc_commands_apps[apps-list]="Get installable apps"
+ebc_commands_apps[app-create]="Create create app on website"
 
 
 
@@ -183,8 +184,8 @@ elif [[ $CMD == "servers" ]]; then
     _enhance_org_servers $@
 elif [[ $CMD == "apps" ]]; then
     _enhance_apps $@
-elif [[ $CMD == "website-apps-create" ]]; then
-    _enhance_website_apps_create $@
+elif [[ $CMD == "app-create" ]]; then
+    _enhance_app_create $@
 elif [[ $CMD == "help" ]]; then
     _help
     exit 0
