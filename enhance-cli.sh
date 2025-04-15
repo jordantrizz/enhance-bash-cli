@@ -26,6 +26,7 @@ ebc_commands_type[website]="Website Actions"
 ebc_commands_type[subscriptions]="Subscription Actions"
 ebc_commands_type[servers]="Server Actions"
 ebc_commands_type[apps]="Apps Actions"
+ebc_commands_type[lets-encrypt]="Lets Encrypt Actions"
 
 typeset -gA ebc_commands_general
 ebc_commands_general[status]="Get status of the Enhance API"
@@ -52,6 +53,10 @@ ebc_commands_servers[servers]="Get server information"
 typeset -gA ebc_commands_apps
 ebc_commands_apps[apps-list]="Get installable apps"
 ebc_commands_apps[app-create]="Create create app on website"
+
+typeset -gA ebc_commands_lets_encrypt
+ebc_commands_lets_encrypt[list-lets-encrypt]="Get lets encrypt information"
+ebc_commands_lets_encrypt[create-lets-encrypt]="Create lets encrypt certificate"
 
 
 
@@ -186,6 +191,11 @@ elif [[ $CMD == "apps" ]]; then
     _enhance_apps $@
 elif [[ $CMD == "app-create" ]]; then
     _enhance_app_create $@
+elif [[ $CMD == "list-lets-encrypt" ]]; then
+    _enhance_list_lets_encrypt $@
+elif [[ $CMD == "create-lets-encrypt" ]]; then
+    _enhance_create_lets_encrypt $@
+# -- Help
 elif [[ $CMD == "help" ]]; then
     _help
     exit 0
