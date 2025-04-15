@@ -141,15 +141,16 @@ _parse_api_output () {
 ebc_functions[_parse_api_error]="Parse Cloudflare API Error"
 _parse_api_error () {
     API_OUTPUT=$@    
+    API_OUTPUT_JQ="$(echo "$API_OUTPUT" | jq -r)"
     _debug "Running parse_cf_error"
 
     # -- Check if API_OUTPUT is JSON
     if [[ $API_OUTPUT == "{"* ]]; then
-        _debug "API_OUTPUT is JSON"
-        _quiet "$API_OUTPUT" | jq
+        _debug "API_OUTPUT is JSON"        
+        _quiet "$API_OUTPUT_JQ"
     else
         _debug "API_OUTPUT is not JSON"
-        _error "$API_OUTPUT"
+        _error "$API_OUTPUT_JQ"
         return 1
     fi
 
