@@ -29,15 +29,16 @@ CDARKGRAY=$(tput setaf 8)
 # -- messages
 # =====================================
 
-_error () { [[ $QUIET == "0" ]] && echo -e "${CRED}** ERROR ** - ${*} ${NC}" >&2; } 
-_warning () { [[ $QUIET == "0" ]] && echo -e "${CYELLOW}** WARNING ** - ${*} ${NC}"; }
-_success () { [[ $QUIET == "0" ]] && echo -e "${CGREEN}** SUCCESS ** - ${*} ${NC}"; }
-_running () { [[ $QUIET == "0" ]] && echo -e "${CBLUEBG}${*}${NC}"; }
-_running2 () { [[ $QUIET == "0" ]] && echo -e " * ${CGRAY}${*}${NC}"; }
-_running3 () { [[ $QUIET == "0" ]] && echo -e " ** ${CDARKGRAY}${*}${NC}"; }
-_creating () { [[ $QUIET == "0" ]] && echo -e "${CGRAY}${*}${NC}"; }
-_separator () { [[ $QUIET == "0" ]] && echo -e "${CYELLOWBG}****************${NC}"; }
-_dryrun () { [[ $QUIET == "0" ]] && echo -e "${CCYAN}** DRYRUN: ${*$}${NC}"; }
+_error () { [[ $QUIET == "0" ]] && echo -e "${CRED}** ERROR ** - ${*} ${NC}" >&2; [[ $QUIET == "1" ]] && _debug "ERROR: ${*}"; } 
+_warning () { [[ $QUIET == "0" ]] && echo -e "${CYELLOW}** WARNING ** - ${*} ${NC}"; [[ $QUIET == "1" ]] && _debug "WARNING: ${*}"; }
+_success () { [[ $QUIET == "0" ]] && echo -e "${CGREEN}** SUCCESS ** - ${*} ${NC}"; [[ $QUIET == "1" ]] && _debug "SUCCESS: ${*}"; }
+_running () { [[ $QUIET == "0" ]] && echo -e "${CBLUEBG}${*}${NC}"; [[ $QUIET == "1" ]] && _debug "${*}"; }
+_running2 () { [[ $QUIET == "0" ]] && echo -e " * ${CGRAY}${*}${NC}"; [[ $QUIET == "1" ]] && _debug "${*}"; }
+_running3 () { [[ $QUIET == "0" ]] && echo -e " ** ${CDARKGRAY}${*}${NC}"; [[ $QUIET == "1" ]] && _debug "${*}"; }
+_creating () { [[ $QUIET == "0" ]] && echo -e "${CGRAY}${*}${NC}"; [[ $QUIET == "1" ]] && _debug "${*}"; }
+_separator () { [[ $QUIET == "0" ]] && echo -e "${CYELLOWBG}****************${NC}"; [[ $QUIET == "1" ]] && _debug "${*}"; }
+_dryrun () { [[ $QUIET == "0" ]] && echo -e "${CCYAN}** DRYRUN: ${*$}${NC}"; [[ $QUIET == "1" ]] && _debug "${*}"; }
+_usage () { [[ $QUIET == "0" ]] && echo -e "${*}"; [[ $QUIET == "1" ]] && _debug "${*}"; }
 _quiet () { [[ $QUIET == "1" ]] && echo -e "${*}"; }
 
 # =====================================

@@ -329,9 +329,10 @@ function _enhance_org_website_create () {
     # "emailServerId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
     # "serverGroupId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
     # "phpVersion": "php56"
-    _debug "function:${FUNCNAME[0]} - ${*}"
-    if [[ -z $@ ]]; then
-        echo "Usage: website-create 
+    _debug "function:${FUNCNAME[0]} - ${*}"    
+    
+    _enhance_org_website_create_usage () {
+        _quiet "Usage: website-create 
     --orgid=<ORG_ID> 
     --name=<WEBSITE_NAME>
     --domain=<DOMAIN>
@@ -341,6 +342,10 @@ function _enhance_org_website_create () {
     --email-server=<EMAIL_SERVER_ID> 
     --server-group=<SERVER_GROUP_ID> 
     --php-version=<PHP_VERSION>"
+    }
+
+    if [[ -z $@ ]]; then
+        _enhance_org_website_create_usage
         return 1
     fi
 
@@ -383,10 +388,10 @@ function _enhance_org_website_create () {
         esac
     done
 
-    [[ -z $ORG_ID ]] && { _error "Organization ID required"; return 1; } 
-    [[ -z $DOMAIN ]] && { _error "Domain required"; return 1; } || JSON_KV=("domain=$DOMAIN")
-    [[ -z $SUBSCRIPTION_ID ]] && { _error "Subscription ID required"; return 1; } || JSON_KV+=("subscriptionId=$SUBSCRIPTION_ID")
-    [[ -z $APP_SERVER_ID ]] && { _error "App Server ID required"; return 1; } || JSON_KV+=("appServerId=$APP_SERVER_ID")
+    [[ -z $ORG_ID ]] && { _error "Organization ID required"; _enhance_org_website_create_usage; return 1; } 
+    [[ -z $DOMAIN ]] && { _error "Domain required"; _enhance_org_website_create_usage; return 1; } || JSON_KV=("domain=$DOMAIN")
+    [[ -z $SUBSCRIPTION_ID ]] && { _error "Subscription ID required"; _enhance_org_website_create_usage; return 1; } || JSON_KV+=("subscriptionId=$SUBSCRIPTION_ID")
+    [[ -z $APP_SERVER_ID ]] && { _error "App Server ID required"; _enhance_org_website_create_usage; return 1; } || JSON_KV+=("appServerId=$APP_SERVER_ID")
     [[ -z $DB_SERVER_ID ]] || JSON_KV+=("dbServerId=$DB_SERVER_ID")
     [[ -z $EMAIL_SERVER_ID ]] || JSON_KV+=("emailServerId=$EMAIL_SERVER_ID")
     [[ -z $SERVER_GROUP_ID ]] || JSON_KV+=("serverGroupId=$SERVER_GROUP_ID")
@@ -491,8 +496,8 @@ function _enhance_app_create () {
     # "domainId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
     
     _debug "function:${FUNCNAME[0]} - ${*}"
-    if [[ -z $@ ]]; then
-        echo "Usage: website-apps-create
+    _enhance_app_create_usage () {
+        _usage "Usage: website-apps-create
     --orgid=<ORG_ID>
     --website=<WEBSITE_ID>
     --app=<APP>
@@ -502,6 +507,9 @@ function _enhance_app_create () {
     --admin-password=<ADMIN_PASSWORD>
     --admin-email=<ADMIN_EMAIL>
     --domain-id=<DOMAIN_ID>"
+    }
+    if [[ -z $@ ]]; then
+        _enhance_app_create_usage
         return 1
     fi
 
@@ -549,15 +557,13 @@ function _enhance_app_create () {
         esac
     done
 
-    [[ -z $ORG_ID ]] && { _error "Organization ID required"; return 1; }
-    [[ -z $WEBSITE_ID ]] && { _error "Website ID required"; return 1; }
-    [[ -z $ADMIN_USERNAME ]] && { _error "Admin Username required"; return 1; } || JSON_KV+=("adminUsername=$ADMIN_USERNAME")
-    [[ -z $ADMIN_EMAIL ]] && { _error "Admin Email required"; return 1; } || JSON_KV+=("adminEmail=$ADMIN_EMAIL")
+    [[ -z $ORG_ID ]] && { _error "Organization ID required"; _enhance_app_create_usage; return 1; }
+    [[ -z $WEBSITE_ID ]] && { _error "Website ID required"; _enhance_app_create_usage; return 1; }
+    [[ -z $ADMIN_USERNAME ]] && { _error "Admin Username required"; _enhance_app_create_usage; return 1; } || JSON_KV+=("adminUsername=$ADMIN_USERNAME")
+    [[ -z $ADMIN_EMAIL ]] && { _error "Admin Email required"; _enhance_app_create_usage; return 1; } || JSON_KV+=("adminEmail=$ADMIN_EMAIL")
     
-    [[ -z $APP ]] && { _error "App required"; return 1; } || JSON_KV+=("app=$APP")
+    [[ -z $APP ]] && { _error "App required"; _enhance_app_create_usage; return 1; } || JSON_KV+=("app=$APP")
     [[ -z $APP_VERSION ]] || JSON_KV+=("version=$APP_VERSION")
-
-    
     
     [[ -z $APP_PATH ]] || JSON_KV+=("path=$APP_PATH")
     [[ -z $ADMIN_PASSWORD ]] || JSON_KV+=("adminPassword=$ADMIN_PASSWORD")    
