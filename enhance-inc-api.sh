@@ -146,10 +146,10 @@ _parse_api_error () {
     # -- Check if API_OUTPUT is JSON
     if [[ $API_OUTPUT == "{"* ]]; then
         _debug "API_OUTPUT is JSON"
-        echo "$API_OUTPUT" | jq
+        _quiet "$API_OUTPUT" | jq
     else
         _debug "API_OUTPUT is not JSON"
-        echo "$API_OUTPUT"
+        _error "$API_OUTPUT"
         return 1
     fi
 
