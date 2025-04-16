@@ -588,3 +588,46 @@ function _enhance_app_create () {
 }
 
 
+# ==============================================================================
+# -- Lets Encrypt Commands
+# ==============================================================================
+# =====================================
+# -- _enhance_lets_encrypt
+# -- Get lets encrypt information
+# =====================================
+function _enhance_lets_encrypt () {
+    _debug "function:${FUNCNAME[0]} - ${*}"
+    
+    _running "Getting lets encrypt information"
+    _enhance_api "GET" "/utils/lets-encrypt"
+    
+    if [[ $CURL_EXIT_CODE == "200" ]]; then
+        _parse_api_output "$API_OUTPUT"
+    else
+        _error "Error: $CURL_EXIT_CODE"
+        _parse_api_error "$API_OUTPUT"
+    fi
+}
+# =====================================
+# -- _enhance_lets_encrypt_create $DOMAIN
+# -- Create lets encrypt certificate
+# =====================================
+function _enhance_lets_encrypt_create () {
+    _debug "function:${FUNCNAME[0]} - ${*}"
+    _enhance_lets_encrypt_create_usage () {
+        _usage "Usage: lets-encrypt-create
+    --orgid=<ORG_ID>
+    --website=<WEBSITE_ID>
+    --domain=<DOMAIN>"
+    }
+    if [[ -z $@ ]]; then
+        _enhance_lets_encrypt_create_usage
+        return 1
+    fi
+
+    local ORG_ID=""
+    local WEBSITE_ID=""
+    local DOMAIN=""
+
+    echo "Not completed"
+}
