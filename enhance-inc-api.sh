@@ -774,30 +774,24 @@ function _enhance_ssl_summary () {
         _enhance_api "GET" "/v2/domains/$DOMAIN_ID/ssl"
         
         if [[ $CURL_EXIT_CODE == "200" ]]; then
-            # Check if there are SSL certificates
-            local SSL_COUNT=$(echo "$API_OUTPUT" | jq -r '.items | length')
+            # Check if there are SSL certificates            
+            # Extract SSL information for each certificate
             
-            if [[ $SSL_COUNT -gt 0 ]]; then
-                # Extract SSL information for each certificate
-                for j in $(seq 0 $(($SSL_COUNT-1))); do
-                    local CN=$(echo "$API_OUTPUT" | jq -r ".items[$j].cn")
-                    local EXPIRES=$(echo "$API_OUTPUT" | jq -r ".items[$j].expires")
-                    local ISSUER=$(echo "$API_OUTPUT" | jq -r ".items[$j].issuer")
-                    
-                    # Format date to be more readable
-                    [[ $EXPIRES != "null" ]] && EXPIRES=$(date -d "$EXPIRES" "+%Y-%m-%d")
-                    
-                    # Add to output
-                    if [[ $j -eq 0 ]]; then
-                        OUTPUT+="$DOMAIN\tActive\t$CN\t$EXPIRES\t$ISSUER\n"
-                    else
-                        # For additional certs for the same domain
-                        OUTPUT+="\t(additional)\t$CN\t$EXPIRES\t$ISSUER\n"
-                    fi
-                done
+            local CN=$(echo "$API_OUTPUT" | jq -r ".cn")
+            local EXPIRES=$(echo "$API_OUTPUT" | jq -r ".expires")
+            local ISSUER=$(echo "$API_OUTPUT" | jq -r ".issuer")
+            
+            # Format date to be more readable
+            [[ $EXPIRES != "null" ]] && EXPIRES=$(date -d "$EXPIRES" "+%Y-%m-%d")
+            
+            # Add to output
+            if [[ $j -eq 0 ]]; then
+                OUTPUT+="$DOMAIN\tActive\t$CN\t$EXPIRES\t$ISSUER\n"
             else
-                OUTPUT+="$DOMAIN\tNo SSL\t-\t-\t-\n"
+                # For additional certs for the same domain
+                OUTPUT+="\t(additional)\t$CN\t$EXPIRES\t$ISSUER\n"
             fi
+        
         else
             _debug "Error getting SSL for $DOMAIN: $CURL_EXIT_CODE"
             OUTPUT+="$DOMAIN\tError\t-\t-\t-\n"
