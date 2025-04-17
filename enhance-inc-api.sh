@@ -140,7 +140,7 @@ _is_json () {
 # =====================================
 ebc_functions[_parse_api_output]="Parse API Output"
 _parse_api_output () {
-    API_OUTPUT=$@    
+    API_OUTPUT="$@"
     _debug "function:${FUNCNAME[0]} - ${*}"
 
     # -- Check if API_OUTPUT is JSON
