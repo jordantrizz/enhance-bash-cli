@@ -32,6 +32,9 @@ typeset -gA ebc_commands_general
 ebc_commands_general[status]="Get status of the Enhance API"
 ebc_commands_general[settings]="Get settings of the Enhance API"
 
+typeset -gA ebc_commands_tools
+ebc_commands_tools[site]="Get site information, either provide domain or domain ID"
+
 typeset -gA ebc_commands_org
 ebc_commands_org[org-info]="Get organization information"
 ebc_commands_org[org-customers]="Get organization customers information"
@@ -224,6 +227,10 @@ if [[ $CMD == "status" ]]; then
     _enhance_status
 elif [[ $CMD == "settings" ]]; then
     _enhance_settings
+# -- Tools
+elif [[ $CMD == "site" ]]; then
+    [[ -z $ORG_ID ]] && ORG_ID="$@"
+    _enhance_org_site "$ORG_ID" "$@"
 elif [[ $CMD == "org-info" ]]; then
     [[ -z $ORG_ID ]] && ORG_ID="$@"
     _enhance_org_info "$ORG_ID"

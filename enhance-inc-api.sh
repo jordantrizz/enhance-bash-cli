@@ -142,7 +142,7 @@ _parse_api_output () {
 ebc_functions[_parse_api_error]="Parse Cloudflare API Error"
 _parse_api_error () {
     _debug "function:${FUNCNAME[0]} - ${*}"
-    local API_OUTPUT="$@"    
+    local API_OUTPUT="$@"
     local API_OUTPUT_JQ="$(echo "$API_OUTPUT" | jq -r)"
     _debug "Running parse_cf_error"
 
@@ -251,6 +251,25 @@ function _enhance_org_customers () {
         _error "Error: $CURL_EXIT_CODE"
         _parse_api_error "$API_OUTPUT"
     fi
+}
+
+
+# ===============================================================================
+# -- Tools
+# ===============================================================================
+# =====================================
+# -- _enhance_org_site
+# -- Get site information
+# =====================================
+function _enhance_org_site () {
+    _debug "function:${FUNCNAME[0]} - ${*}"
+    local ORG_ID="$1"
+    shift
+    local SITE="$@"
+    [[ -z $SITE ]] && { _error "Website or Domain ID required"; return 1; }
+    [[ -z $ORG_ID ]] && { _error "Organization ID required"; return 1; }
+    
+    # -- Not completed.
 }
 
 # =============================================================================
