@@ -146,10 +146,12 @@ _parse_api_error () {
 
     # -- Check if API_OUTPUT is JSON
     if [[ $API_OUTPUT == "{"* ]]; then
-        _debug "API_OUTPUT is JSON"        
+        _debug "API_OUTPUT is JSON"
+        _debug "$API_OUTPUT_JQ"
         _quiet "$API_OUTPUT_JQ"
     else
         _debug "API_OUTPUT is not JSON"
+        _debug "$API_OUTPUT_JQ"
         _error "$API_OUTPUT_JQ"
         return 1
     fi
@@ -705,6 +707,46 @@ function _enhance_ssl () {
 
     if [[ $CURL_EXIT_CODE == "200" ]]; then
         _parse_api_output "$API_OUTPUT"
+    else
+        _error "Error: $CURL_EXIT_CODE"
+        _parse_api_error "$API_OUTPUT"
+    fi
+}
+
+# ===================================
+# -- _enhance_ssl_summary $ORG_ID $DOMAIN
+# -- Get SSL summary for an organization
+# ===================================
+function _enhance_ssl_summary () {
+    _debug "function:${FUNCNAME[0]} - ${*}"
+    local ORG_ID="$1"
+    local DOMAINS=()
+    
+    _running "Getting SSL summary for organization $ORG_ID"
+    # -- Get a list of domains and ID's 
+
+    # -- Go through each domain
+    
+
+    _running2 "Getting domain ID for $DOMAIN"
+    QUIET=1
+    DOMAIN_ID=$(_enhance_org_domain_get_id $ORG_ID $DOMAIN)
+    QUIET=0
+    [[ -z $DOMAIN_ID ]] && { _error "No domain ID found for $DOMAIN"; return 1; }
+    _debug "DOMAIN_ID: $DOMAIN_ID"
+    
+    _enhance_api "GET" "/v2/domains/$DOMAIN_ID/ssl"
+
+    if [[ $CURL_EXIT_CODE == "200" ]]; then
+        # -- Select Domain and ID
+        # -- Get id from json under .items[] where id,domain reside
+        # -- Put into a table, with header
+        # -Print cn, expires, issuer, sans
+        OUTPUT="Domain\tDomainID\tCN\tExpires\tIssuer\tSANs\n"
+        OUTPUT+="-------\t-------\t------\t----\n"
+        OUTPUT+=$(echo "$API_OUTPUT" | jq -r ".items[] | select(.domain) | [.cn, .expires, .issuer, .sans] | @tsv")
+        # -- Print out the table
+        echo -e "$OUTPUT" | column -t -s $'\t'
     else
         _error "Error: $CURL_EXIT_CODE"
         _parse_api_error "$API_OUTPUT"

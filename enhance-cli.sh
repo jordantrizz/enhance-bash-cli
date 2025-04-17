@@ -61,6 +61,7 @@ ebc_commands_domains[domain-id]="Get domain information by ID"
 ebc_commands_domains[domain-info]="Get domain information"
 ebc_commands_domains[domains-summary]="Get domain summary information"
 ebc_commands_domains[ssl]="Get SSL information for a domain"
+ebc_commands_domains[ssl-summary]="Get SSL summary information for a domain"
 ebc_commands_domains[lets-encrypt-pre-flight]="Pre-flight check for lets encrypt for domain"
 ebc_commands_domains[lets-encrypt-create]="Create lets encrypt certificate for domain"
 
@@ -247,6 +248,9 @@ elif [[ $CMD == "app-create" ]]; then
 elif [[ $CMD == "domains" ]]; then
     [[ -z $ORG_ID ]] && ORG_ID="$@"
     _enhance_org_domains $ORG_ID
+elif [[ $CMD == "domain-id" ]]; then
+    [[ -z $ORG_ID ]] && ORG_ID="$@"
+    [[ -z $DOMAIN ]] && { _error "No domain specificed, use --domain"; exit 1; }
 elif [[ $CMD == "domain-info" ]]; then
     [[ -z $ORG_ID ]] && ORG_ID="$@"
     [[ -z $DOMAIN ]] && { _error "No domain specificed, use --domain"; exit 1; }
@@ -254,13 +258,13 @@ elif [[ $CMD == "domain-info" ]]; then
 elif [[ $CMD == "domains-summary" ]]; then
     [[ -z $ORG_ID ]] && ORG_ID="$@"
     _enhance_org_domains_summary $ORG_ID
-elif [[ $CMD == "domain-id" ]]; then
-    [[ -z $ORG_ID ]] && ORG_ID="$@"
-    [[ -z $DOMAIN ]] && { _error "No domain specificed, use --domain"; exit 1; }
     _enhance_org_domain_get_id $ORG_ID $DOMAIN
 elif [[ $CMD == "ssl" ]]; then
     [[ -z $DOMAIN ]] && { _error "No domain specificed, use --domain"; exit 1; }
     _enhance_ssl $DOMAIN
+elif [[ $CMD == "ssl-summary" ]]; then
+    [[ -z $ORG_ID ]] && ORG_ID="$@"    
+    _enhance_ssl_summary $ORG_ID
 elif [[ $CMD == "lets-encrypt-pre-flight" ]]; then
     _enhance_lets_encrypt_pre_flight $@
 elif [[ $CMD == "lets-encrypt-create" ]]; then    
@@ -269,7 +273,8 @@ elif [[ $CMD == "lets-encrypt-create" ]]; then
 elif [[ $CMD == "help" ]]; then
     _help
     exit 0
-else 
+else     
     _help
+    _error "Command not found: $CMD"
     exit 1
 fi
