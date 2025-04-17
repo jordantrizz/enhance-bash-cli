@@ -439,6 +439,7 @@ function _enhance_org_website_create () {
             API_OUTPUT_JQ="$(echo "$API_OUTPUT" | jq -r)"
             _debug "$API_OUTPUT_JQ"
             CODE=$(echo "$API_OUTPUT" | jq -r '.code')
+            _debug "CODE: $CODE"
             if [[ $CODE == "already_exists" ]]; then
                 _error "Website already exists"
                 return 1
