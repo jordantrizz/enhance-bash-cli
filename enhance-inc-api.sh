@@ -113,7 +113,7 @@ function _enhance_api () {
         MESG="Error from API: $CURL_EXIT_CODE"
         _error "$MESG"
         _parse_api_error "$API_OUTPUT"
-        exit 1
+        return 1
     fi
 }
 
