@@ -17,6 +17,7 @@ CRED=$(tput setaf 1)
 CYELLOW=$(tput setaf 3)
 CGREEN=$(tput setaf 2)
 CBLUEBG=$(tput setab 4)
+CLIGHTBLUE=$(tput setaf 4)
 CCYAN=$(tput setaf 6)
 CGRAY=$(tput setaf 7)
 CDARKGRAY=$(tput setaf 8)
@@ -33,7 +34,7 @@ _error () { [[ $QUIET == "0" ]] && echo -e "${CRED}** ERROR ** - ${*} ${NC}" >&2
 _warning () { [[ $QUIET == "0" ]] && echo -e "${CYELLOW}** WARNING ** - ${*} ${NC}"; [[ $QUIET == "1" ]] && _debug "WARNING: ${*}"; }
 _success () { [[ $QUIET == "0" ]] && echo -e "${CGREEN}** SUCCESS ** - ${*} ${NC}"; [[ $QUIET == "1" ]] && _debug "SUCCESS: ${*}"; }
 _running () { [[ $QUIET == "0" ]] && echo -e "${CBLUEBG}${*}${NC}"; [[ $QUIET == "1" ]] && _debug "${*}"; }
-_running2 () { [[ $QUIET == "0" ]] && echo -e " * ${CGRAY}${*}${NC}"; [[ $QUIET == "1" ]] && _debug "${*}"; }
+_running2 () { [[ $QUIET == "0" ]] && echo -e " * ${CLIGHTBLUE}${*}${NC}"; [[ $QUIET == "1" ]] && _debug "${*}"; }
 _running3 () { [[ $QUIET == "0" ]] && echo -e " ** ${CDARKGRAY}${*}${NC}"; [[ $QUIET == "1" ]] && _debug "${*}"; }
 _creating () { [[ $QUIET == "0" ]] && echo -e "${CGRAY}${*}${NC}"; [[ $QUIET == "1" ]] && _debug "${*}"; }
 _separator () { [[ $QUIET == "0" ]] && echo -e "${CYELLOWBG}****************${NC}"; [[ $QUIET == "1" ]] && _debug "${*}"; }
@@ -133,6 +134,7 @@ function _check_api_creds () {
         _error "API_URL not found in $API_CRED_FILE."
         exit 1
     fi
+    
 }
 
 # =====================================

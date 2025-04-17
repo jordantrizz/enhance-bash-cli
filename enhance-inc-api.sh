@@ -588,18 +588,20 @@ function _enhance_app_create () {
 }
 
 
-# ==============================================================================
-# -- Lets Encrypt Commands
-# ==============================================================================
+# =============================================================================
+# -- Domain Commands
+# =============================================================================
 # =====================================
-# -- _enhance_lets_encrypt
-# -- Get lets encrypt information
+# -- _enhance_org_domains $ORG_ID
+# -- Get domains for an organization
 # =====================================
-function _enhance_lets_encrypt () {
+function _enhance_org_domains () {
     _debug "function:${FUNCNAME[0]} - ${*}"
+    local ORG_ID="$1"
+    [[ -z $ORG_ID ]] && { _error "Organization ID required"; return 1; }
     
-    _running "Getting lets encrypt information"
-    _enhance_api "GET" "/utils/lets-encrypt"
+    _running "Getting domains for organization $ORG_ID"
+    _enhance_api "GET" "/orgs/$ORG_ID/domains"
     
     if [[ $CURL_EXIT_CODE == "200" ]]; then
         _parse_api_output "$API_OUTPUT"
@@ -609,7 +611,115 @@ function _enhance_lets_encrypt () {
     fi
 }
 # =====================================
-# -- _enhance_lets_encrypt_create $DOMAIN
+# -- _enhance_org_domain_get_id $ORG_ID $DOMAIN
+# -- Get domain ID
+# =====================================
+function _enhance_org_domain_get_id () {
+    _debug "function:${FUNCNAME[0]} - ${*}"
+    local ORG_ID="$1"
+    local DOMAIN="$2"
+    [[ -z $DOMAIN ]] && { _error "Domain required"; return 1; }
+    
+    _running "Getting Domain ID for $DOMAIN"
+    _enhance_api "GET" "/orgs/$ORG_ID/domains"
+    
+    if [[ $CURL_EXIT_CODE == "200" ]]; then
+        # -- Get id from json under .items[] where id,domain reside
+        DOMAIN_ID=$(echo "$API_OUTPUT" | jq -r ".items[] | select(.domain == \"$DOMAIN\") | .id")
+        _success "Domain ID: $DOMAIN_ID"
+        _quiet "$DOMAIN_ID"
+    else
+        _error "Error: $CURL_EXIT_CODE"
+        _parse_api_error "$API_OUTPUT"
+    fi
+}
+
+# ===================================
+# -- _enhance_org_domain_info $ORG_ID $DOMAIN
+# -- Get domain information
+# ===================================
+function _enhance_org_domain_info () {
+    _debug "function:${FUNCNAME[0]} - ${*}"
+    local ORG_ID="$1"
+    local DOMAIN="$2"
+    [[ -z $DOMAIN ]] && { _error "No domain specificed, use --domain"; exit 1; }
+    
+    _running "Getting domain information for $DOMAIN"
+    _enhance_api "GET" "/orgs/$ORG_ID/domains"
+    
+    if [[ $CURL_EXIT_CODE == "200" ]]; then
+        # -- Get entire item if domain matches
+        echo "$API_OUTPUT" | jq -r ".items[] | select(.domain == \"$DOMAIN\")"        
+    else
+        _error "Error: $CURL_EXIT_CODE"
+        _parse_api_error "$API_OUTPUT"
+    fi
+}
+
+# ===================================
+# -- _enhance_org_domains_summary $ORG_ID
+# -- Get domains summary for an organization
+# ===================================
+function _enhance_org_domains_summary () {
+    _debug "function:${FUNCNAME[0]} - ${*}"
+    local ORG_ID="$1"
+    local OUTPUT
+    [[ -z $ORG_ID ]] && { _error "Organization ID required"; return 1; }
+    
+    _running "Getting domains summary for organization $ORG_ID"
+    _enhance_api "GET" "/orgs/$ORG_ID/domains"
+    
+    if [[ $CURL_EXIT_CODE == "200" ]]; then
+        # -- Select Domain and ID
+        # -- Get id from json under .items[] where id,domain reside
+        # -- Put into a table, with header
+        OUTPUT="Domain\tID\n"
+        OUTPUT+="------\t--\n"
+        OUTPUT+=$(echo "$API_OUTPUT" | jq -r ".items[] | select(.domain) | [.domain, .id] | @tsv")
+        echo -e "$OUTPUT" | column -t -s $'\t'
+
+    else
+        _error "Error: $CURL_EXIT_CODE"
+        _parse_api_error "$API_OUTPUT"
+    fi
+}
+
+# ===================================
+# -- _enhance_ssl $DOMAIN
+# -- Get SSL information
+# ===================================
+function _enhance_ssl () {
+    _debug "function:${FUNCNAME[0]} - ${*}"
+    local DOMAIN="$1"
+    [[ -z $DOMAIN ]] && { _error "No domain specificed, use --domain"; exit 1; }
+    
+    _running "Getting SSL information for $DOMAIN"
+    _running2 "Getting domain ID for $DOMAIN"
+    QUIET=1
+    DOMAIN_ID=$(_enhance_org_domain_get_id $ORG_ID $DOMAIN)
+    QUIET=0
+    [[ -z $DOMAIN_ID ]] && { _error "No domain ID found for $DOMAIN"; return 1; }
+    _debug "DOMAIN_ID: $DOMAIN_ID"
+    _running2 "Getting SSL information for domain $DOMAIN_ID"
+    _enhance_api "GET" "/v2/domains/$DOMAIN_ID/ssl"
+
+    if [[ $CURL_EXIT_CODE == "200" ]]; then
+        _parse_api_output "$API_OUTPUT"
+    else
+        _error "Error: $CURL_EXIT_CODE"
+        _parse_api_error "$API_OUTPUT"
+    fi
+}
+
+# =====================================
+# -- _enhance_website_lets_encrypt_list $DOMAIN
+# -- Get lets encrypt information
+# =====================================
+function _enhance_website_lets_encrypt_list () {
+    echo "Not completed"
+}
+# =====================================
+# -- _enhance_website_lets_encrypt_create $DOMAIN
 # -- Create lets encrypt certificate
 # =====================================
 function _enhance_lets_encrypt_create () {
@@ -631,3 +741,4 @@ function _enhance_lets_encrypt_create () {
 
     echo "Not completed"
 }
+
