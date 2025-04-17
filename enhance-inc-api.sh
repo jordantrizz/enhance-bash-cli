@@ -140,8 +140,9 @@ _is_json () {
 # =====================================
 ebc_functions[_parse_api_output]="Parse API Output"
 _parse_api_output () {
-    API_OUTPUT="$@"
     _debug "function:${FUNCNAME[0]} - ${*}"
+    local API_OUTPUT="$@"
+    
 
     # -- Check if API_OUTPUT is JSON
     if [[ $API_OUTPUT == "{"* ]]; then
@@ -158,8 +159,9 @@ _parse_api_output () {
 # =====================================
 ebc_functions[_parse_api_error]="Parse Cloudflare API Error"
 _parse_api_error () {
-    API_OUTPUT=$@    
-    API_OUTPUT_JQ="$(echo "$API_OUTPUT" | jq -r)"
+    _debug "function:${FUNCNAME[0]} - ${*}"
+    local API_OUTPUT="$@"    
+    local API_OUTPUT_JQ="$(echo "$API_OUTPUT" | jq -r)"
     _debug "Running parse_cf_error"
 
     # -- Check if API_OUTPUT is JSON
