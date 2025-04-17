@@ -121,9 +121,9 @@ function _enhance_api () {
 # -- _is_json $API_OUTPUT
 # -- Check if API_OUTPUT is JSON
 # ===================================
-mebc_functions[_is_json]="Check if API_OUTPUT is JSON"
+ebc_functions[_is_json]="Check if API_OUTPUT is JSON"
 _is_json () {
-    API_OUTPUT="$@    "
+    API_OUTPUT="$@"
     _debug "function:${FUNCNAME[0]} - ${*}"
     _debug "API_OUTPUT: $API_OUTPUT"
     # -- Check if API_OUTPUT is JSON
@@ -434,8 +434,7 @@ function _enhance_org_website_create () {
         return 0
     else
         # -- Check if API_OUTPUT is JSON
-        if [[ $(_is_json $API_OUTPUT) ]]; then
-            _debug "API_OUTPUT is JSON"                        
+        if [[ $(_is_json $API_OUTPUT) ]]; then                              
             CODE=$(echo "$API_OUTPUT" | jq -r '.code')
             _debug "CODE: $CODE"
             if [[ $CODE == "already_exists" ]]; then
