@@ -441,13 +441,18 @@ function _enhance_org_website_create () {
             CODE=$(echo "$API_OUTPUT" | jq -r '.code')
             if [[ $CODE == "already_exists" ]]; then
                 _error "Website already exists"
+                return 1
+            else
+                _error "Error: $CURL_EXIT_CODE"
+                _error "$(_parse_api_error $API_OUTPUT)"
+                return 1
+            fi
         else
             _debug "API_OUTPUT is not JSON"
             _debug "$API_OUTPUT"
+            _error "$API_OUTPUT"
+            return 1
         fi
-        _error "Error: $CURL_EXIT_CODE"
-        _error "$(_parse_api_error $API_OUTPUT)"
-        return 1
     fi
 }
 
