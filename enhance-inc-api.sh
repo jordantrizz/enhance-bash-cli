@@ -18,7 +18,7 @@
 # -- Run cf_api request and return exit code via $CURL_EXIT_CODE
 # =====================================
 ebc_functions[_enhance_api]="Run enhance api request"
-function _enhance_api() {
+function _enhance_api () {
     # -- Run cf_api with tokens
     _debug "function:${FUNCNAME[0]} - ${*}"
     _debug "Running _enhance_api() with ${*}"
@@ -114,6 +114,25 @@ function _enhance_api() {
         _error "$MESG"
         _parse_api_error "$API_OUTPUT"
         exit 1
+    fi
+}
+
+# ===================================
+# -- _is_json $API_OUTPUT
+# -- Check if API_OUTPUT is JSON
+# ===================================
+mebc_functions[_is_json]="Check if API_OUTPUT is JSON"
+_is_json () {
+    API_OUTPUT="$@    "
+    _debug "function:${FUNCNAME[0]} - ${*}"
+    _debug "API_OUTPUT: $API_OUTPUT"
+    # -- Check if API_OUTPUT is JSON
+    if [[ $API_OUTPUT == "{"* ]]; then
+        _debug "API_OUTPUT is JSON"
+        return 0
+    else
+        _debug "API_OUTPUT is not JSON"
+        return 1
     fi
 }
 
@@ -414,6 +433,18 @@ function _enhance_org_website_create () {
         _quiet "$(echo $API_OUTPUT | jq -r '.id')"
         return 0
     else
+        # -- Check if API_OUTPUT is JSON
+        if [[ $(_is_json $API_OUTPUT) ]]; then
+            _debug "API_OUTPUT is JSON"
+            API_OUTPUT_JQ="$(echo "$API_OUTPUT" | jq -r)"
+            _debug "$API_OUTPUT_JQ"
+            CODE=$(echo "$API_OUTPUT" | jq -r '.code')
+            if [[ $CODE == "already_exists" ]]; then
+                _error "Website already exists"
+        else
+            _debug "API_OUTPUT is not JSON"
+            _debug "$API_OUTPUT"
+        fi
         _error "Error: $CURL_EXIT_CODE"
         _error "$(_parse_api_error $API_OUTPUT)"
         return 1
