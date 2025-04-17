@@ -124,8 +124,7 @@ function _enhance_api () {
 ebc_functions[_is_json]="Check if API_OUTPUT is JSON"
 _is_json () {
     API_OUTPUT="$@"
-    _debug "function:${FUNCNAME[0]} - ${*}"
-    _debug "API_OUTPUT: $API_OUTPUT"
+    _debug "function:${FUNCNAME[0]} - ${*}"    
     # -- Check if API_OUTPUT is JSON
     if [[ $API_OUTPUT == "{"* ]]; then
         _debug "API_OUTPUT is JSON"
