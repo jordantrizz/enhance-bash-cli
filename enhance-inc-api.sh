@@ -731,43 +731,81 @@ function _enhance_ssl () {
 }
 
 # ===================================
-# -- _enhance_ssl_summary $ORG_ID $DOMAIN
-# -- Get SSL summary for an organization
+# -- _enhance_ssl_summary $ORG_ID
+# -- Get SSL summary for all domains in an organization
 # ===================================
 function _enhance_ssl_summary () {
     _debug "function:${FUNCNAME[0]} - ${*}"
     local ORG_ID="$1"
+    local DOMAIN_IDS=()
     local DOMAINS=()
+    local OUTPUT=""
+    
+    [[ -z $ORG_ID ]] && { _error "Organization ID required"; return 1; }
     
     _running "Getting SSL summary for organization $ORG_ID"
-    # -- Get a list of domains and ID's 
-
-    # -- Go through each domain
     
-
-    _running2 "Getting domain ID for $DOMAIN"
-    QUIET=1
-    DOMAIN_ID=$(_enhance_org_domain_get_id $ORG_ID $DOMAIN)
-    QUIET=0
-    [[ -z $DOMAIN_ID ]] && { _error "No domain ID found for $DOMAIN"; return 1; }
-    _debug "DOMAIN_ID: $DOMAIN_ID"
+    # -- First get a list of all domains for this organization
+    _running2 "Getting domains for organization $ORG_ID"
+    _enhance_api "GET" "/orgs/$ORG_ID/domains"
     
-    _enhance_api "GET" "/v2/domains/$DOMAIN_ID/ssl"
-
-    if [[ $CURL_EXIT_CODE == "200" ]]; then
-        # -- Select Domain and ID
-        # -- Get id from json under .items[] where id,domain reside
-        # -- Put into a table, with header
-        # -Print cn, expires, issuer, sans
-        OUTPUT="Domain\tDomainID\tCN\tExpires\tIssuer\tSANs\n"
-        OUTPUT+="-------\t-------\t------\t----\n"
-        OUTPUT+=$(echo "$API_OUTPUT" | jq -r ".items[] | select(.domain) | [.cn, .expires, .issuer, .sans] | @tsv")
-        # -- Print out the table
-        echo -e "$OUTPUT" | column -t -s $'\t'
-    else
-        _error "Error: $CURL_EXIT_CODE"
+    if [[ $CURL_EXIT_CODE != "200" ]]; then
+        _error "Error fetching domains: $CURL_EXIT_CODE"
         _parse_api_error "$API_OUTPUT"
+        return 1
     fi
+    
+    # -- Extract domain information and IDs
+    mapfile -t DOMAINS < <(echo "$API_OUTPUT" | jq -r ".items[].domain")
+    mapfile -t DOMAIN_IDS < <(echo "$API_OUTPUT" | jq -r ".items[].id")
+    
+    _debug "Found ${#DOMAINS[@]} domains"
+    
+    # -- Prepare table header
+    OUTPUT="Domain\tSSL Status\tCN\tExpires\tIssuer\n"
+    OUTPUT+="------\t----------\t--\t-------\t------\n"
+    
+    # -- Process each domain
+    for i in "${!DOMAINS[@]}"; do
+        local DOMAIN="${DOMAINS[$i]}"
+        local DOMAIN_ID="${DOMAIN_IDS[$i]}"
+        
+        _running2 "Getting SSL information for domain $DOMAIN ($DOMAIN_ID)"
+        _enhance_api "GET" "/v2/domains/$DOMAIN_ID/ssl"
+        
+        if [[ $CURL_EXIT_CODE == "200" ]]; then
+            # Check if there are SSL certificates
+            local SSL_COUNT=$(echo "$API_OUTPUT" | jq -r '.items | length')
+            
+            if [[ $SSL_COUNT -gt 0 ]]; then
+                # Extract SSL information for each certificate
+                for j in $(seq 0 $(($SSL_COUNT-1))); do
+                    local CN=$(echo "$API_OUTPUT" | jq -r ".items[$j].cn")
+                    local EXPIRES=$(echo "$API_OUTPUT" | jq -r ".items[$j].expires")
+                    local ISSUER=$(echo "$API_OUTPUT" | jq -r ".items[$j].issuer")
+                    
+                    # Format date to be more readable
+                    [[ $EXPIRES != "null" ]] && EXPIRES=$(date -d "$EXPIRES" "+%Y-%m-%d")
+                    
+                    # Add to output
+                    if [[ $j -eq 0 ]]; then
+                        OUTPUT+="$DOMAIN\tActive\t$CN\t$EXPIRES\t$ISSUER\n"
+                    else
+                        # For additional certs for the same domain
+                        OUTPUT+="\t(additional)\t$CN\t$EXPIRES\t$ISSUER\n"
+                    fi
+                done
+            else
+                OUTPUT+="$DOMAIN\tNo SSL\t-\t-\t-\n"
+            fi
+        else
+            _debug "Error getting SSL for $DOMAIN: $CURL_EXIT_CODE"
+            OUTPUT+="$DOMAIN\tError\t-\t-\t-\n"
+        fi
+    done
+    
+    # -- Print out the table
+    echo -e "$OUTPUT" | column -t -s $'\t'
 }
 
 # =====================================
