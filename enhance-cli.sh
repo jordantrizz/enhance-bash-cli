@@ -12,6 +12,7 @@ SCRIPT_NAME="enhance-cli"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 VERSION="$(cat "${SCRIPT_DIR}/VERSION")"
 DEBUG="0"
+# shellcheck disable=SC2034
 DRYRUN="0"
 QUIET="0"
 
@@ -30,32 +31,40 @@ ebc_commands_type[domains]="Domains Actions"
 
 typeset -gA ebc_commands_general
 ebc_commands_general[status]="Get status of the Enhance API"
+# shellcheck disable=SC2034
 ebc_commands_general[settings]="Get settings of the Enhance API"
 
 typeset -gA ebc_commands_tools
+# shellcheck disable=SC2034
 ebc_commands_tools[site]="Get site information, either provide domain or domain ID"
 
 typeset -gA ebc_commands_org
 ebc_commands_org[org-info]="Get organization information"
+# shellcheck disable=SC2034
 ebc_commands_org[org-customers]="Get organization customers information"
 
 typeset -gA ebc_commands_plan
+# shellcheck disable=SC2034
 ebc_commands_plan[plan-info]="Get plan information"
 
 typeset -gA ebc_commands_website
 ebc_commands_website[websites]="Get website information"
 ebc_commands_website[website-get]="Get website information"
+# shellcheck disable=SC2034
 ebc_commands_website[website-create]="Create a website"
 
 
 typeset -gA ebc_commands_subscriptions
+# shellcheck disable=SC2034
 ebc_commands_subscriptions[subscriptions]="Get subscription information"
 
 typeset -gA ebc_commands_servers
+# shellcheck disable=SC2034
 ebc_commands_servers[servers]="Get server information"
 
 typeset -gA ebc_commands_apps
 ebc_commands_apps[apps-list]="Get installable apps"
+# shellcheck disable=SC2034
 ebc_commands_apps[app-create]="Create create app on website"
 
 typeset -gA ebc_commands_domains
@@ -66,14 +75,15 @@ ebc_commands_domains[domains-summary]="Get domain summary information"
 ebc_commands_domains[ssl]="Get SSL information for a domain"
 ebc_commands_domains[ssl-summary]="Get SSL summary information for a domain"
 ebc_commands_domains[lets-encrypt-pre-flight]="Pre-flight check for lets encrypt for domain"
+# shellcheck disable=SC2034
 ebc_commands_domains[lets-encrypt-create]="Create lets encrypt certificate for domain"
 
 
 # ==================================
 # -- Include cf-inc.sh and cf-api-inc.sh
 # ==================================
-source "$SCRIPT_DIR/enhance-inc.sh"
-source "$SCRIPT_DIR/enhance-inc-api.sh"
+source "${SCRIPT_DIR}/enhance-inc.sh"
+source "${SCRIPT_DIR}/enhance-inc-api.sh"
 
 # ==============================================================================================
 # -- Functions
@@ -119,6 +129,8 @@ function _help () {
     _help_print_commands
     echo   
     _print_options
+    echo
+    echo "Version: $VERSION - $SCRIPT_NAME - Author: https://managingWP.io"
 }
 
 
@@ -145,7 +157,7 @@ function _help_print_commands () {
 # -- Main
 # ==============================================================================================
 ARG_DEBUG=()
-ALL_ARGS="$@"
+ALL_ARGS="$*"
 # -- Parse options
     POSITIONAL=()
     while [[ $# -gt 0 ]]
@@ -176,16 +188,19 @@ ALL_ARGS="$@"
         exit 0
         ;;
         --quiet)
+        # shellcheck disable=SC2034
         QUIET="1"
         ARG_DEBUG+=(QUIET)
         shift # past argument
         ;;
         --debug)
+        # shellcheck disable=SC2034
         DEBUG="1"
         ARG_DEBUG+=(DEBUG)
         shift # past argument
         ;;
         --debug-json)
+        # shellcheck disable=SC2034
         DEBUG_JSON="1"
         ARG_DEBUG+=(DEBUG_JSON)
         shift # past argument
@@ -195,6 +210,7 @@ ALL_ARGS="$@"
         exit 0
         ;;
         --json)
+        # shellcheck disable=SC2034
         JSON="1"
         ARG_DEBUG+=(JSON)
         shift # past argument
@@ -209,7 +225,7 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 
 # -- Commands
 _debug "ALL_ARGS: $ALL_ARGS"
-_debug "ARG_DEBUG: ${ARG_DEBUG[@]}"
+_debug "ARG_DEBUG: ${ARG_DEBUG[*]}"
 for ARG in "${ARG_DEBUG[@]}"; do
     _debug "$ARG: ${!ARG}"
 done
@@ -229,53 +245,53 @@ elif [[ $CMD == "settings" ]]; then
     _enhance_settings
 # -- Tools
 elif [[ $CMD == "site" ]]; then
-    [[ -z $ORG_ID ]] && ORG_ID="$@"
-    _enhance_org_site "$ORG_ID" "$@"
+    [[ -z $ORG_ID ]] && ORG_ID="$1"
+    _enhance_org_tool_site "$ORG_ID" "$1"
 elif [[ $CMD == "org-info" ]]; then
-    [[ -z $ORG_ID ]] && ORG_ID="$@"
+    [[ -z $ORG_ID ]] && ORG_ID="${*}"
     _enhance_org_info "$ORG_ID"
 elif [[ $CMD == "org-customers" ]]; then
-    _enhance_org_customers $@
+    _enhance_org_customers "$@"
 elif [[ $CMD == "plan-info" ]]; then
-    _enhance_plan_info $@
+    _enhance_plan_info "$@"
 elif [[ $CMD == "websites" ]]; then
-    _enhance_org_websites $@
+    _enhance_org_websites "$@"
 elif [[ $CMD == "website-get" ]]; then
-    _enhance_org_website_get $@
+    _enhance_org_website_get "$@"
 elif [[ $CMD == "website-create" ]]; then
-    _enhance_org_website_create $@
+    _enhance_org_website_create "$@"
 elif [[ $CMD == "subscriptions" ]]; then
-    _enhance_org_subscriptions $@
+    _enhance_org_subscriptions "$@"
 elif [[ $CMD == "servers" ]]; then
-    _enhance_org_servers $@
+    _enhance_org_servers "$@"
 elif [[ $CMD == "apps" ]]; then
-    _enhance_apps $@
+    _enhance_apps "$@"
 elif [[ $CMD == "app-create" ]]; then
-    _enhance_app_create $@
+    _enhance_app_create "$@"
 elif [[ $CMD == "domains" ]]; then
-    [[ -z $ORG_ID ]] && ORG_ID="$@"
-    _enhance_org_domains $ORG_ID
+    [[ -z $ORG_ID ]] && ORG_ID="${*}"
+    _enhance_org_domains "$ORG_ID"
 elif [[ $CMD == "domain-id" ]]; then
-    [[ -z $ORG_ID ]] && ORG_ID="$@"
+    [[ -z $ORG_ID ]] && ORG_ID="${*}"
     [[ -z $DOMAIN ]] && { _error "No domain specificed, use --domain"; exit 1; }
 elif [[ $CMD == "domain-info" ]]; then
-    [[ -z $ORG_ID ]] && ORG_ID="$@"
+    [[ -z $ORG_ID ]] && ORG_ID="${*}"
     [[ -z $DOMAIN ]] && { _error "No domain specificed, use --domain"; exit 1; }
-    _enhance_org_domain_info $ORG_ID $DOMAIN
+    _enhance_org_domain_info "$ORG_ID" "$DOMAIN"
 elif [[ $CMD == "domains-summary" ]]; then
-    [[ -z $ORG_ID ]] && ORG_ID="$@"
-    _enhance_org_domains_summary $ORG_ID
-    _enhance_org_domain_get_id $ORG_ID $DOMAIN
+    [[ -z $ORG_ID ]] && ORG_ID="${*}"
+    _enhance_org_domains_summary "$ORG_ID"
+    _enhance_org_domain_get_id "$ORG_ID" "$DOMAIN"
 elif [[ $CMD == "ssl" ]]; then
     [[ -z $DOMAIN ]] && { _error "No domain specificed, use --domain"; exit 1; }
-    _enhance_ssl $DOMAIN
+    _enhance_ssl "$DOMAIN"
 elif [[ $CMD == "ssl-summary" ]]; then
-    [[ -z $ORG_ID ]] && ORG_ID="$@"    
-    _enhance_ssl_summary $ORG_ID
+    [[ -z $ORG_ID ]] && ORG_ID="${*}"    
+    _enhance_ssl_summary "$ORG_ID"
 elif [[ $CMD == "lets-encrypt-pre-flight" ]]; then
-    _enhance_lets_encrypt_pre_flight $@
+    _enhance_lets_encrypt_pre_flight "$@"
 elif [[ $CMD == "lets-encrypt-create" ]]; then    
-    _enhance_lets_encrypt_create $@
+    _enhance_lets_encrypt_create "$@"
 # -- Help
 elif [[ $CMD == "help" ]]; then
     _help

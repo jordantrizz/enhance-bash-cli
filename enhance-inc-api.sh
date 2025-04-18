@@ -1,3 +1,4 @@
+#!/bin/env bash
 # =============================================================================
 # -- enhance-bash-cli - Enhance API Library
 # =============================================================================
@@ -17,6 +18,7 @@
 # -- Run cf_api request and return output via $API_OUTPUT
 # -- Run cf_api request and return exit code via $CURL_EXIT_CODE
 # =====================================
+# shellcheck disable=SC2154
 ebc_functions[_enhance_api]="Run enhance api request"
 function _enhance_api () {
     # -- Run cf_api with tokens
@@ -28,7 +30,9 @@ function _enhance_api () {
     local ALL_PAGES=0
     local PAGE=1
     local PER_PAGE=50
+    # shellcheck disable=SC2034
     local HAS_MORE=false
+    # shellcheck disable=SC2034
     local COMBINED_RESULTS=""
     local API_PATH=""
     local REQUEST=""
@@ -43,6 +47,7 @@ function _enhance_api () {
                 ;;
             --all-pages)
                 PAGINATE=1
+                # shellcheck disable=SC2034
                 ALL_PAGES=1
                 ;;
             --page=*)
@@ -90,6 +95,8 @@ function _enhance_api () {
     CURL_OUTPUT=$(mktemp)
 
     # -- Start API Call
+    # shellcheck disable=SC2027
+    # shellcheck disable=SC2086
     _debug "Running curl -s --request $REQUEST --url "${API_URL}${API_PATH}" "${CURL_HEADERS[*]}" --output $CURL_OUTPUT ${EXTRA[*]}"
     [[ $DEBUG == "1" ]] && set -x
     CURL_EXIT_CODE=$(curl -s -w "%{http_code}" --request "$REQUEST" \
@@ -123,7 +130,7 @@ function _enhance_api () {
 ebc_functions[_parse_api_output]="Parse API Output"
 _parse_api_output () {
     _debug "function:${FUNCNAME[0]} - ${*}"
-    local API_OUTPUT="$@"
+    local API_OUTPUT="${*}"
     
 
     # -- Check if API_OUTPUT is JSON
@@ -142,8 +149,9 @@ _parse_api_output () {
 ebc_functions[_parse_api_error]="Parse Cloudflare API Error"
 _parse_api_error () {
     _debug "function:${FUNCNAME[0]} - ${*}"
-    local API_OUTPUT="$@"
-    local API_OUTPUT_JQ="$(echo "$API_OUTPUT" | jq -r)"
+    local API_OUTPUT="${*}"
+    local API_OUTPUT_JQ=""
+    API_OUTPUT_JQ="$(echo "$API_OUTPUT" | jq -r)"
     _debug "Running parse_cf_error"
 
     # -- Check if API_OUTPUT is JSON
@@ -170,7 +178,7 @@ _parse_api_error () {
 # =====================================
 ebc_functions[_enhance_api]="Get status of the Enhance API"
 function _enhance_status() {
-    _debug "function:${FUNCNAME[0]} - ${*}"
+    _debug "function:${FUNCNAME[0]}"
     _enhance_api "GET" "/status"
     
     if [[ $CURL_EXIT_CODE == "200" ]]; then
@@ -196,7 +204,7 @@ function _enhance_status() {
 # =====================================
 ebc_functions[_enhance_settings]="Get settings of the Enhance API"
 function _enhance_settings() {
-    _debug "function:${FUNCNAME[0]} - ${*}"
+    _debug "function:${FUNCNAME[0]}"
     _enhance_api "GET" "/settings"
     
     if [[ $CURL_EXIT_CODE == "200" ]]; then
@@ -236,6 +244,7 @@ function _enhance_org_info() {
 # -- _enhance_org_customers $ORG_ID
 # -- Get customer information
 # =============================================================================
+# shellcheck disable=SC2034
 ebc_functions[_enhance_org_customers]="Get customer information"
 function _enhance_org_customers () {
     _debug "function:${FUNCNAME[0]} - ${*}"
@@ -253,23 +262,80 @@ function _enhance_org_customers () {
     fi
 }
 
+# ==============================================================================
+# -- Simple Functions
+# ==============================================================================
+# =====================================
+# -- _is_uuid $UUID
+# -- Check if a string is a UUID
+# =====================================
+function _is_uuid () {
+    _debug "function:${FUNCNAME[0]} - ${*}"
+    local UUID="$1"
+    # -- Check if UUID is valid (standard format or with 7-char first segment)
+    if [[ $UUID =~ ^[0-9a-f]{7,8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+# =====================================
+# -- _get_domain_name $ORG_ID $DOMAIN_ID
+# ===================================
+function _get_domain_name () {
+    _debug "function:${FUNCNAME[0]} - ${*}"
+    local ORG_ID="$1"
+    local DOMAIN_ID="$2"
+    [[ -z $ORG_ID ]] && { _error "Organization ID required"; return 1; }
+    [[ -z $DOMAIN_ID ]] && { _error "Domain ID required"; return 1; }
+        
+    _enhance_api "GET" "/orgs/$ORG_ID/websites"
+    
+    if [[ $CURL_EXIT_CODE == "200" ]]; then
+        # -- Get domain name from json using DOMAIN_ID
+        # -- Domains are listed as .items[] with id and domain
+        _debug "DOMAIN_ID: $DOMAIN_ID"
+        # # jq -r '.items []| select(.id == "de32806a-8a9a-4c40-bd8f-40a88ffdd4d8" and .domain.kind == "primary") | .domain.domain'
+        echo "$API_OUTPUT" | jq -r ".items[] | select(.id == \"$DOMAIN_ID\" and .domain.kind == \"primary\") | .domain.domain"
+    else
+        _error "Error: $CURL_EXIT_CODE"
+        _parse_api_error "$API_OUTPUT"
+    fi
+}
+
 
 # ===============================================================================
 # -- Tools
 # ===============================================================================
 # =====================================
-# -- _enhance_org_site
+# -- _enhance_org_tool_site
 # -- Get site information
 # =====================================
-function _enhance_org_site () {
+# shellcheck disable=SC2034
+ebc_functions[_enhance_org_tool_site]="Return domain or domain ID for the opposite"
+function _enhance_org_tool_site () {
     _debug "function:${FUNCNAME[0]} - ${*}"
-    local ORG_ID="$1"
-    shift
-    local SITE="$@"
-    [[ -z $SITE ]] && { _error "Website or Domain ID required"; return 1; }
+    local ORG_ID="$1"    
+    local DOMAIN_OR_DOMAINID="$2"
+    [[ -z $DOMAIN_OR_DOMAINID ]] && { _error "Website or Domain ID required"; return 1; }
     [[ -z $ORG_ID ]] && { _error "Organization ID required"; return 1; }
     
-    # -- Not completed.
+    # -- Check if DOMAIN_OR_DOMAINID is a domain or domain ID
+    # -- a3cbc4b-d074-4008-9c26-9e6b44254f5b
+    _is_uuid "$DOMAIN_OR_DOMAINID"    
+    if _is_uuid "$DOMAIN_OR_DOMAINID"; then
+        # -- It's a domain ID 
+        _running "Getting Domain Name for $DOMAIN_OR_DOMAINID under ORG_ID $ORG_ID"
+        # -- Get the domain name using the domain ID from the enhance API                
+        DOMAIN=$(_get_domain_name "$ORG_ID" "$DOMAIN_OR_DOMAINID")
+        _success "Domain: $DOMAIN"
+        _quiet "$DOMAIN"
+        
+    else
+        # -- It's a domain
+        _running "Getting Domain ID for domain $DOMAIN_OR_DOMAINID under ORG_ID $ORG_ID"
+        _enhance_api "GET" "/orgs/$ORG_ID/domains?domain=$DOMAIN_OR_DOMAINID"
+    fi
 }
 
 # =============================================================================
@@ -368,7 +434,7 @@ function _enhance_org_website_create () {
     --php-version=<PHP_VERSION>"
     }
 
-    if [[ -z $@ ]]; then
+    if [[ -z ${*} ]]; then
         _enhance_org_website_create_usage
         return 1
     fi
@@ -431,8 +497,8 @@ function _enhance_org_website_create () {
     _enhance_api "POST" "/orgs/$ORG_ID/websites" -H "Content-Type: application/json" -d "$JSON"
     
     if [[ $CURL_EXIT_CODE == "201" ]]; then
-        _success "$(_parse_api_output $API_OUTPUT)"
-        _quiet "$(echo $API_OUTPUT | jq -r '.id')"
+        _success "$(_parse_api_output "$API_OUTPUT")"
+        _quiet "$(echo "$API_OUTPUT" | jq -r '.id')"
         return 0
     else
         # -- Check if API_OUTPUT is JSON
@@ -444,7 +510,7 @@ function _enhance_org_website_create () {
                 return 1
             else
                 _error "Error: $CURL_EXIT_CODE"
-                _error "$(_parse_api_error $API_OUTPUT)"
+                _error "$(_parse_api_error "$API_OUTPUT")"
                 return 1
             fi
         else
@@ -547,7 +613,7 @@ function _enhance_app_create () {
     --admin-email=<ADMIN_EMAIL>
     --domain-id=<DOMAIN_ID>"
     }
-    if [[ -z $@ ]]; then
+    if [[ -z ${*} ]]; then
         _enhance_app_create_usage
         return 1
     fi
@@ -558,10 +624,11 @@ function _enhance_app_create () {
     local APP_VERSION=""
     local APP_PATH=""
     local ADMIN_USERNAME=""
-    local ADMIN_PASSWORD="$(_generate_password)"
+    local ADMIN_PASSWORD=
     local ADMIN_EMAIL=""
     local DOMAIN_ID=""
     local JSON_KV=()
+    ADMIN_PASSWORD="$(_generate_password)"
 
     # -- Parse Arguments
     for arg in "$@"; do
@@ -617,11 +684,11 @@ function _enhance_app_create () {
     _enhance_api "POST" "/orgs/$ORG_ID/websites/$WEBSITE_ID/apps" -H "Content-Type: application/json" -d "$JSON"
     
     if [[ $CURL_EXIT_CODE == "201" ]]; then
-        _success "$(_parse_api_output $API_OUTPUT)"
-        _quiet "$(echo $API_OUTPUT | jq -r '.id')"
+        _success "$(_parse_api_output "$API_OUTPUT")"
+        _quiet "$(echo "$API_OUTPUT" | jq -r '.id')"
     else
         _error "Error: $CURL_EXIT_CODE"
-        _error "$(_parse_api_error $API_OUTPUT)"
+        _error "$(_parse_api_error "$API_OUTPUT")"
     fi
 }
 
@@ -734,7 +801,8 @@ function _enhance_ssl () {
     _running "Getting SSL information for $DOMAIN"
     _running2 "Getting domain ID for $DOMAIN"
     QUIET=1
-    DOMAIN_ID=$(_enhance_org_domain_get_id $ORG_ID $DOMAIN)
+    DOMAIN_ID=$(_enhance_org_domain_get_id "$ORG_ID" "$DOMAIN")
+    # shellcheck disable=SC2034
     QUIET=0
     [[ -z $DOMAIN_ID ]] && { _error "No domain ID found for $DOMAIN"; return 1; }
     _debug "DOMAIN_ID: $DOMAIN_ID"
@@ -795,10 +863,10 @@ function _enhance_ssl_summary () {
         if [[ $CURL_EXIT_CODE == "200" ]]; then
             # Check if there are SSL certificates            
             # Extract SSL information for each certificate
-            
-            local CN=$(echo "$API_OUTPUT" | jq -r ".cn")
-            local EXPIRES=$(echo "$API_OUTPUT" | jq -r ".expires")
-            local ISSUER=$(echo "$API_OUTPUT" | jq -r ".issuer")
+            local CN EXPIRES ISSUER
+            CN=$(echo "$API_OUTPUT" | jq -r ".cn")
+            EXPIRES=$(echo "$API_OUTPUT" | jq -r ".expires")
+            ISSUER=$(echo "$API_OUTPUT" | jq -r ".issuer")
             
             # Format date to be more readable
             [[ $EXPIRES != "null" ]] && EXPIRES=$(date -d "$EXPIRES" "+%Y-%m-%d")
@@ -840,7 +908,7 @@ function _enhance_lets_encrypt_create () {
     --website=<WEBSITE_ID>
     --domain=<DOMAIN>"
     }
-    if [[ -z $@ ]]; then
+    if [[ -z ${*} ]]; then
         _enhance_lets_encrypt_create_usage
         return 1
     fi
