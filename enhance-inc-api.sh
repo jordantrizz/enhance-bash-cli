@@ -279,6 +279,7 @@ function _is_uuid () {
         return 1
     fi
 }
+
 # =====================================
 # -- _get_domain_name $ORG_ID $DOMAIN_ID
 # ===================================
@@ -296,7 +297,12 @@ function _get_domain_name () {
         # -- Domains are listed as .items[] with id and domain
         _debug "DOMAIN_ID: $DOMAIN_ID"
         # # jq -r '.items []| select(.id == "de32806a-8a9a-4c40-bd8f-40a88ffdd4d8" and .domain.kind == "primary") | .domain.domain'
-        echo "$API_OUTPUT" | jq -r ".items[] | select(.id == \"$DOMAIN_ID\" and .domain.kind == \"primary\") | .domain.domain"
+        DOMAIN=$(echo "$API_OUTPUT" | jq -r ".items[] | select(.id == \"$DOMAIN_ID\" and .domain.kind == \"primary\") | .domain.domain")
+        if [[ -z $DOMAIN ]]; then
+            _error "No domain found for domain ID $DOMAIN_ID"            
+            return 1
+        fi
+        echo "$DOMAIN"
     else
         _error "Error: $CURL_EXIT_CODE"
         _parse_api_error "$API_OUTPUT"
@@ -317,21 +323,25 @@ function _enhance_org_tool_site () {
     _debug "function:${FUNCNAME[0]} - ${*}"
     local ORG_ID="$1"    
     local DOMAIN_OR_DOMAINID="$2"
+    local DOMAIN=""
     [[ -z $DOMAIN_OR_DOMAINID ]] && { _error "Website or Domain ID required"; return 1; }
     [[ -z $ORG_ID ]] && { _error "Organization ID required"; return 1; }
     
     # -- Check if DOMAIN_OR_DOMAINID is a domain or domain ID
-    # -- a3cbc4b-d074-4008-9c26-9e6b44254f5b
-    _is_uuid "$DOMAIN_OR_DOMAINID"    
+    # -- a3cbc4b-d074-4008-9c26-9e6b44254f5b    
     if _is_uuid "$DOMAIN_OR_DOMAINID"; then
         # -- It's a domain ID 
         _running "Getting Domain Name for $DOMAIN_OR_DOMAINID under ORG_ID $ORG_ID"
         # -- Get the domain name using the domain ID from the enhance API                
         DOMAIN=$(_get_domain_name "$ORG_ID" "$DOMAIN_OR_DOMAINID")
+        if [[ -z $DOMAIN ]]; then
+            _error "No domain found for domain ID $DOMAIN_OR_DOMAINID"            
+            return 1
+        fi
         _success "Domain: $DOMAIN"
         _quiet "$DOMAIN"
         
-    else
+    elif _is_domain "$DOMAIN_ID"; then
         # -- It's a domain
         _running "Getting Domain ID for domain $DOMAIN_OR_DOMAINID under ORG_ID $ORG_ID"
         _enhance_api "GET" "/orgs/$ORG_ID/domains?domain=$DOMAIN_OR_DOMAINID"
